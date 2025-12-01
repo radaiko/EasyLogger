@@ -45,7 +45,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
         Assert.AreEqual(message, messages[0].Message);
     }
@@ -61,7 +61,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(testMessage, messages[0].Message);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
         Assert.IsNull(messages[0].Exception);
@@ -82,7 +82,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(LogLevel.Warning, messages[0].Level);
         Assert.AreEqual(message, messages[0].Message);
     }
@@ -100,7 +100,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(3, messages.Count);
+        Assert.HasCount(3, messages);
         for (int i = 0; i < warnings.Length; i++) {
             Assert.AreEqual(LogLevel.Warning, messages[i].Level);
             Assert.AreEqual(warnings[i], messages[i].Message);
@@ -123,7 +123,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(LogLevel.Error, messages[0].Level);
         Assert.AreEqual(message, messages[0].Message);
         Assert.IsNotNull(messages[0].Exception);
@@ -144,7 +144,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(LogLevel.Error, messages[0].Level);
         Assert.AreEqual(message, messages[0].Message);
         Assert.AreEqual(exceptionMessage, messages[0].Exception?.Message);
@@ -168,7 +168,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(4, messages.Count);
+        Assert.HasCount(4, messages);
         Assert.IsInstanceOfType(messages[0].Exception, typeof(InvalidOperationException));
         Assert.IsInstanceOfType(messages[1].Exception, typeof(ArgumentException));
         Assert.IsInstanceOfType(messages[2].Exception, typeof(NullReferenceException));
@@ -190,7 +190,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(0, messages.Count, "Debug message should not be stored when EnableDebugLogging is false");
+        Assert.IsEmpty(messages, "Debug message should not be stored when EnableDebugLogging is false");
     }
 
     /// <summary>Tests that Debug messages ARE stored when debug logging is enabled.</summary>
@@ -205,7 +205,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(LogLevel.Debug, messages[0].Level);
         Assert.AreEqual(message, messages[0].Message);
     }
@@ -224,7 +224,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(3, messages.Count);
+        Assert.HasCount(3, messages);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
         Assert.AreEqual(LogLevel.Warning, messages[1].Level);
         Assert.AreEqual(LogLevel.Error, messages[2].Level);
@@ -302,7 +302,7 @@ public sealed class LoggerTests {
 
         // Assert - verify the message is stored
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(message, messages[0].Message);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
     }
@@ -318,7 +318,7 @@ public sealed class LoggerTests {
 
         // Assert - verify message is stored even though console output is disabled
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(message, messages[0].Message);
     }
 
@@ -335,7 +335,7 @@ public sealed class LoggerTests {
 
         // Assert - verify all messages are stored
         var messages = Logger.GetMessages();
-        Assert.AreEqual(3, messages.Count);
+        Assert.HasCount(3, messages);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
         Assert.AreEqual(LogLevel.Warning, messages[1].Level);
         Assert.AreEqual(LogLevel.Error, messages[2].Level);
@@ -353,7 +353,7 @@ public sealed class LoggerTests {
 
         // Assert - verify exception is stored with the message
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.IsNotNull(messages[0].Exception);
         Assert.AreEqual(exceptionMessage, messages[0].Exception?.Message);
     }
@@ -370,7 +370,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(string.Empty, messages[0].Message);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
     }
@@ -386,7 +386,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(longMessage, messages[0].Message);
         Assert.AreEqual(10000, messages[0].Message.Length);
     }
@@ -402,7 +402,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(specialMessage, messages[0].Message);
     }
 
@@ -417,7 +417,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(unicodeMessage, messages[0].Message);
     }
 
@@ -432,7 +432,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(1, messages.Count);
+        Assert.HasCount(1, messages);
         Assert.AreEqual(multilineMessage, messages[0].Message);
     }
 
@@ -452,7 +452,7 @@ public sealed class LoggerTests {
 
         // Assert
         var messages = Logger.GetMessages();
-        Assert.AreEqual(4, messages.Count);
+        Assert.HasCount(4, messages);
         Assert.AreEqual(LogLevel.Info, messages[0].Level);
         Assert.AreEqual(LogLevel.Warning, messages[1].Level);
         Assert.AreEqual(LogLevel.Error, messages[2].Level);
@@ -468,13 +468,13 @@ public sealed class LoggerTests {
         Logger.Error("Message 3", new Exception());
 
         // Verify messages were stored
-        Assert.AreEqual(3, Logger.GetMessages().Count);
+        Assert.HasCount(3, Logger.GetMessages());
 
         // Act
         Logger.Reset();
 
         // Assert
-        Assert.AreEqual(0, Logger.GetMessages().Count);
+        Assert.IsEmpty(Logger.GetMessages());
         Assert.IsTrue(Logger.UseConsole);
         Assert.IsFalse(Logger.UseFile);
         Assert.IsFalse(Logger.EnableDebugLogging);

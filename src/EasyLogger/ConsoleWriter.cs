@@ -22,9 +22,13 @@ internal static class ConsoleWriter {
             _ => originalColor
         };
 
-        Console.WriteLine(logMessage.ToString());
-        if (logMessage.Exception != null) Console.WriteLine($"Exception: {logMessage.Exception}");
-
-        Console.ForegroundColor = originalColor;
+        try {
+            Console.WriteLine(logMessage.ToString());
+            if (logMessage.Exception != null)
+                Console.WriteLine($"Exception: {logMessage.Exception}");
+        }
+        finally {
+            Console.ForegroundColor = originalColor;
+        }
     }
 }

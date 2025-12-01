@@ -10,10 +10,29 @@ namespace EasyLogger;
 
 /// <summary>Writes log messages to files with support for rotation and cleanup operations.</summary>
 internal static class FileWriter {
-    /// <summary>Writes a log message to a file.</summary>
+    /// <summary>Lock object for thread-safe file access.</summary>
+    private static readonly Lock WriteLock = new();
+
+    /// <summary>The path to the log file in the application directory.</summary>
+    private static readonly string LogFilePath = Path.Combine(
+        AppContext.BaseDirectory,
+        "logs.txt"
+    );
+
+    /// <summary>Writes a log message to a file in a thread-safe manner.</summary>
     /// <param name="logMessage">The log message to write to file.</param>
     internal static void Write(LogMessage logMessage) {
-        // TODO: Implement file writing logic here
+        try {
+            lock (WriteLock) {
+                var formattedMessage = $"{logMessage}\n";
+                File.AppendAllText(LogFilePath, formattedMessage);
+            }
+        }
+        catch (Exception ex) {
+            // Swallow IO exceptions to prevent crashing callers.
+            // In production, you might want to log this to a fallback mechanism.
+            System.Diagnostics.Debug.WriteLine($"Failed to write to log file: {ex.Message}");
+        }
     }
 
     // TODO: Add methods for managing log files, such as rotation and cleanup
