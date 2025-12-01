@@ -1,1 +1,4 @@
-<Solution />
+<Solution>
+  <Project Path="EasyLogger.Tests\EasyLogger.Tests.csproj" Type="Classic C#" />
+  <Project Path="EasyLogger\EasyLogger.csproj" Type="Classic C#" />
+</Solution>
