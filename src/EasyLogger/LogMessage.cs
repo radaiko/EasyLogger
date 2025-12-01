@@ -9,7 +9,7 @@
 namespace EasyLogger;
 
 /// <summary>Represents a single log message with timestamp and metadata about its origin.</summary>
-internal sealed class LogMessage {
+public sealed class LogMessage {
     /// <summary>Gets the UTC timestamp when the log message was created.</summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
@@ -40,6 +40,11 @@ internal sealed class LogMessage {
         Exception = exception;
         Caller = caller;
         LineNumber = lineNumber;
+    }
 
+    /// <summary>Returns a string representation of the log message.</summary>
+    public override string ToString() {
+        var exceptionInfo = Exception != null ? $" | Exception: {Exception.GetType().Name}: {Exception.Message}" : string.Empty;
+        return $"[{Timestamp:O}] [{Level}] {Message}{exceptionInfo} (Caller: {Caller}, Line: {LineNumber})";
     }
 }

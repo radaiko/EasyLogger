@@ -12,21 +12,18 @@ using System.Runtime.CompilerServices;
 namespace EasyLogger;
 
 /// <summary>Provides static logging methods with support for multiple output targets and configurable behavior.</summary>
-public sealed class Logger {
-    /// <summary>Singleton instance of the Logger class.</summary>
-    private static Logger _instance = new();
-
+public static class Logger {
     /// <summary>Storage for maintaining logged messages in memory.</summary>
-    private static Storage _storage = new();
+    private static readonly Storage Storage = new();
 
     /// <summary>Gets or sets a value indicating whether log messages should be written to the console.</summary>
     public static bool UseConsole { get; set; } = true;
 
     /// <summary>Gets or sets a value indicating whether log messages should be written to files.</summary>
-    public static bool UseFile { get; set; } = false;
+    public static bool UseFile { get; set; }
 
     /// <summary>Gets or sets a value indicating whether debug log messages are enabled.</summary>
-    public static bool EnableDebugLogging { get; set; } = false;
+    public static bool EnableDebugLogging { get; set; }
 
     /// <summary>Logs an informational message.</summary>
     /// <param name="message">The message to log.</param>
@@ -57,14 +54,32 @@ public sealed class Logger {
     public static void Debug(string message, [CallerMemberName] string caller = "", [CallerLineNumber] int lineNumber = 0)
         => Write(new LogMessage(LogLevel.Debug, message, null, caller, lineNumber));
 
+    /// <summary>Resets all static state (flags and internal storage) to their default values.</summary>
+    /// <remarks>This method is primarily intended for test cleanup to ensure isolated test execution.</remarks>
+    public static void Reset() {
+        UseConsole = true;
+        UseFile = false;
+        EnableDebugLogging = false;
+        Storage.Clear();
+    }
+
+    /// <summary>Gets a read-only view of all logged messages in the internal storage.</summary>
+    /// <remarks>This method is primarily intended for testing to verify logged content.</remarks>
+    /// <returns>A read-only list of all log messages that have been stored.</returns>
+    public static IReadOnlyList<LogMessage> GetMessages() {
+        return Storage.GetAll();
+    }
+
     /// <summary>Writes a log message to configured output targets.</summary>
     /// <param name="logMessage">The log message to write.</param>
     private static void Write(LogMessage logMessage) {
         if (logMessage.Level == LogLevel.Debug && !EnableDebugLogging) {
             return;
         }
-        _storage.Add(logMessage);
+        Storage.Add(logMessage);
         if (UseConsole)
             ConsoleWriter.Write(logMessage);
+        if (UseFile)
+            FileWriter.Write(logMessage);
     }
 }

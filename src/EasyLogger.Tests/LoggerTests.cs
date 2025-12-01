@@ -9,99 +9,112 @@
 namespace EasyLogger.Tests;
 
 /// <summary>Provides unit tests for the Logger class functionality.</summary>
+/// <remarks>
+/// Tests are marked as [DoNotParallelize] because the Logger class uses static state
+/// that is shared across all tests. Without this attribute, tests would interfere with
+/// each other when run in parallel, even with Reset() in Setup/Cleanup.
+/// </remarks>
 [TestClass]
+[DoNotParallelize]
 public sealed class LoggerTests {
     /// <summary>Test setup method that runs before each test to reset Logger state.</summary>
     [TestInitialize]
     public void Setup() {
-        // Reset logger configuration to known state
+        // Clear all logger state before running each test to ensure test isolation
+        Logger.Reset();
         Logger.UseConsole = false;
-        Logger.UseFile = false;
-        Logger.EnableDebugLogging = false;
     }
 
     /// <summary>Test cleanup method that runs after each test to reset Logger state.</summary>
     [TestCleanup]
     public void Cleanup() {
-        // Reset logger configuration to default state
-        Logger.UseConsole = true;
-        Logger.UseFile = false;
-        Logger.EnableDebugLogging = false;
+        // Clear all logger state after each test for clean isolation
+        Logger.Reset();
     }
 
     #region Info Logging Tests
 
-    /// <summary>Tests that the Info method logs a message successfully.</summary>
+    /// <summary>Tests that the Info method stores a message correctly.</summary>
     [TestMethod]
-    public void Info_LogsInformationalMessage() {
+    public void Info_StoresInformationalMessage() {
         // Arrange
-        Logger.UseConsole = false;
         var message = "This is an info message";
 
         // Act
         Logger.Info(message);
 
-        // Assert - If no exception is thrown, the test passes
-        Assert.IsTrue(true);
+        // Assert
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
+        Assert.AreEqual(message, messages[0].Message);
     }
 
-    /// <summary>Tests that Info method preserves the message content correctly.</summary>
+    /// <summary>Tests that Info method preserves message content exactly.</summary>
     [TestMethod]
     public void Info_PreservesMessageContent() {
         // Arrange
-        Logger.UseConsole = false;
         var testMessage = "Test information message";
 
         // Act
         Logger.Info(testMessage);
 
         // Assert
-        Assert.IsNotNull(testMessage);
-        Assert.AreEqual("Test information message", testMessage);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(testMessage, messages[0].Message);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
+        Assert.IsNull(messages[0].Exception);
     }
 
     #endregion
 
     #region Warning Logging Tests
 
-    /// <summary>Tests that the Warning method logs a warning message successfully.</summary>
+    /// <summary>Tests that the Warning method stores a warning message correctly.</summary>
     [TestMethod]
-    public void Warning_LogsWarningMessage() {
+    public void Warning_StoresWarningMessage() {
         // Arrange
-        Logger.UseConsole = false;
         var message = "This is a warning message";
 
         // Act
         Logger.Warning(message);
 
         // Assert
-        Assert.IsTrue(true);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(LogLevel.Warning, messages[0].Level);
+        Assert.AreEqual(message, messages[0].Message);
     }
 
-    /// <summary>Tests that Warning method can be called multiple times.</summary>
+    /// <summary>Tests that Warning method can be called multiple times and all messages are stored.</summary>
     [TestMethod]
-    public void Warning_CanLogMultipleWarnings() {
+    public void Warning_StoresMultipleWarnings() {
         // Arrange
-        Logger.UseConsole = false;
+        var warnings = new[] { "First warning", "Second warning", "Third warning" };
 
         // Act
-        Logger.Warning("First warning");
-        Logger.Warning("Second warning");
-        Logger.Warning("Third warning");
+        foreach (var warning in warnings) {
+            Logger.Warning(warning);
+        }
 
         // Assert
-        Assert.IsTrue(true);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(3, messages.Count);
+        for (int i = 0; i < warnings.Length; i++) {
+            Assert.AreEqual(LogLevel.Warning, messages[i].Level);
+            Assert.AreEqual(warnings[i], messages[i].Message);
+        }
     }
 
     #endregion
 
     #region Error Logging Tests
 
-    /// <summary>Tests that the Error method logs an error message with an exception.</summary>
+    /// <summary>Tests that the Error method stores an error message with exception.</summary>
     [TestMethod]
-    public void Error_LogsErrorWithException() {
+    public void Error_StoresErrorWithException() {
         // Arrange
-        Logger.UseConsole = false;
         var message = "An error occurred";
         var exception = new InvalidOperationException("Test exception");
 
@@ -109,96 +122,119 @@ public sealed class LoggerTests {
         Logger.Error(message, exception);
 
         // Assert
-        Assert.IsNotNull(exception);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(LogLevel.Error, messages[0].Level);
+        Assert.AreEqual(message, messages[0].Message);
+        Assert.IsNotNull(messages[0].Exception);
+        Assert.IsInstanceOfType(messages[0].Exception, typeof(InvalidOperationException));
+        Assert.AreEqual("Test exception", messages[0].Exception?.Message);
     }
 
-    /// <summary>Tests that the Error method logs an error message with null exception.</summary>
+    /// <summary>Tests that the Error method preserves exception information.</summary>
     [TestMethod]
-    public void Error_CanLogWithoutException() {
+    public void Error_PreservesExceptionData() {
         // Arrange
-        Logger.UseConsole = false;
         var message = "An error occurred";
+        var exceptionMessage = "Important error details";
+        var testException = new InvalidOperationException(exceptionMessage);
 
         // Act
-        // The Error method signature requires an exception, but we test with a valid one
-        var testException = new InvalidOperationException("Test");
         Logger.Error(message, testException);
 
         // Assert
-        Assert.IsNotNull(testException);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(LogLevel.Error, messages[0].Level);
+        Assert.AreEqual(message, messages[0].Message);
+        Assert.AreEqual(exceptionMessage, messages[0].Exception?.Message);
     }
 
     /// <summary>Tests that the Error method can handle various exception types.</summary>
     [TestMethod]
     public void Error_HandlesVariousExceptionTypes() {
         // Arrange
-        Logger.UseConsole = false;
-        var exceptions = new Exception[] {
+        var exceptionTypes = new Exception[] {
             new InvalidOperationException("Invalid operation"),
             new ArgumentException("Invalid argument"),
             new NullReferenceException("Null reference"),
             new IOException("IO error")
         };
 
-        // Act & Assert
-        foreach (var ex in exceptions) {
+        // Act
+        foreach (var ex in exceptionTypes) {
             Logger.Error("Error occurred", ex);
-            Assert.IsNotNull(ex);
         }
+
+        // Assert
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(4, messages.Count);
+        Assert.IsInstanceOfType(messages[0].Exception, typeof(InvalidOperationException));
+        Assert.IsInstanceOfType(messages[1].Exception, typeof(ArgumentException));
+        Assert.IsInstanceOfType(messages[2].Exception, typeof(NullReferenceException));
+        Assert.IsInstanceOfType(messages[3].Exception, typeof(IOException));
     }
 
     #endregion
 
     #region Debug Logging Tests
 
-    /// <summary>Tests that Debug logging is disabled by default.</summary>
+    /// <summary>Tests that Debug messages are NOT stored when debug logging is disabled.</summary>
     [TestMethod]
-    public void Debug_IsDisabledByDefault() {
+    public void Debug_NotStoredWhenDisabled() {
         // Arrange
-        Logger.UseConsole = false;
-        Logger.EnableDebugLogging = false;
-
-        // Act
-        Logger.Debug("Debug message");
-
-        // Assert - If no exception is thrown, the test passes
-        Assert.IsTrue(true);
-    }
-
-    /// <summary>Tests that Debug messages are logged when enabled.</summary>
-    [TestMethod]
-    public void Debug_LogsWhenEnabled() {
-        // Arrange
-        Logger.UseConsole = false;
-        Logger.EnableDebugLogging = true;
-        var message = "Debug message";
-
-        // Act
-        Logger.Debug(message);
-
-        // Assert - If no exception is thrown, the test passes
-        Assert.IsTrue(true);
-    }
-
-    /// <summary>Tests that Debug messages are not logged when disabled.</summary>
-    [TestMethod]
-    public void Debug_SkipsWhenDisabled() {
-        // Arrange
-        Logger.UseConsole = false;
         Logger.EnableDebugLogging = false;
 
         // Act
         Logger.Debug("This debug message should be ignored");
 
         // Assert
-        Assert.IsFalse(Logger.EnableDebugLogging);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(0, messages.Count, "Debug message should not be stored when EnableDebugLogging is false");
+    }
+
+    /// <summary>Tests that Debug messages ARE stored when debug logging is enabled.</summary>
+    [TestMethod]
+    public void Debug_StoredWhenEnabled() {
+        // Arrange
+        Logger.EnableDebugLogging = true;
+        var message = "Debug message";
+
+        // Act
+        Logger.Debug(message);
+
+        // Assert
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(LogLevel.Debug, messages[0].Level);
+        Assert.AreEqual(message, messages[0].Message);
+    }
+
+    /// <summary>Tests that non-debug messages are stored even when debug logging is disabled.</summary>
+    [TestMethod]
+    public void NonDebugMessages_StoredWhenDebugDisabled() {
+        // Arrange
+        Logger.EnableDebugLogging = false;
+
+        // Act
+        Logger.Info("Info message");
+        Logger.Warning("Warning message");
+        Logger.Error("Error message", new Exception());
+        Logger.Debug("Debug message");
+
+        // Assert
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(3, messages.Count);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
+        Assert.AreEqual(LogLevel.Warning, messages[1].Level);
+        Assert.AreEqual(LogLevel.Error, messages[2].Level);
     }
 
     #endregion
 
     #region Configuration Tests
 
-    /// <summary>Tests that UseConsole setting controls console output.</summary>
+    /// <summary>Tests that UseConsole setting can be toggled on.</summary>
     [TestMethod]
     public void UseConsole_CanBeToggledOn() {
         // Arrange
@@ -211,7 +247,7 @@ public sealed class LoggerTests {
         Assert.IsTrue(Logger.UseConsole);
     }
 
-    /// <summary>Tests that UseConsole can be disabled.</summary>
+    /// <summary>Tests that UseConsole can be toggled off.</summary>
     [TestMethod]
     public void UseConsole_CanBeToggledOff() {
         // Arrange
@@ -224,7 +260,7 @@ public sealed class LoggerTests {
         Assert.IsFalse(Logger.UseConsole);
     }
 
-    /// <summary>Tests that UseFile setting can be configured.</summary>
+    /// <summary>Tests that UseFile setting can be toggled.</summary>
     [TestMethod]
     public void UseFile_CanBeToggled() {
         // Arrange
@@ -237,7 +273,7 @@ public sealed class LoggerTests {
         Assert.IsTrue(Logger.UseFile);
     }
 
-    /// <summary>Tests that EnableDebugLogging can be configured.</summary>
+    /// <summary>Tests that EnableDebugLogging can be toggled.</summary>
     [TestMethod]
     public void EnableDebugLogging_CanBeToggled() {
         // Arrange
@@ -252,118 +288,213 @@ public sealed class LoggerTests {
 
     #endregion
 
-    #region Integration Tests
+    #region Console Output Tests
 
-    /// <summary>Tests that all logging methods work together without errors.</summary>
+    /// <summary>Tests that messages are stored regardless of console output setting.</summary>
     [TestMethod]
-    public void AllMethods_WorkTogether() {
+    public void Console_MessagesStoredWhenEnabled() {
         // Arrange
-        Logger.UseConsole = false;
+        Logger.UseConsole = true;
+        var message = "Test console output";
 
         // Act
-        Logger.Info("Information message");
-        Logger.Warning("Warning message");
-        Logger.Error("Error message", new Exception("Test error"));
-        Logger.Debug("Debug message");
+        Logger.Info(message);
 
-        // Assert
-        Assert.IsTrue(true);
+        // Assert - verify the message is stored
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(message, messages[0].Message);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
     }
 
-    /// <summary>Tests that logging works with console enabled.</summary>
+    /// <summary>Tests that messages are stored when UseConsole is disabled.</summary>
     [TestMethod]
-    public void AllMethods_WorkWithConsoleEnabled() {
+    public void Console_MessagesStoredWhenDisabled() {
+        // Arrange
+        var message = "Test console output disabled";
+
+        // Act
+        Logger.Info(message);
+
+        // Assert - verify message is stored even though console output is disabled
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(message, messages[0].Message);
+    }
+
+    /// <summary>Tests that all log levels are stored correctly.</summary>
+    [TestMethod]
+    public void Console_AllLevelsStored() {
         // Arrange
         Logger.UseConsole = true;
 
         // Act
-        Logger.Info("Info with console");
-        Logger.Warning("Warning with console");
-        Logger.Error("Error with console", new Exception("Test"));
-        Logger.Debug("Debug with console");
+        Logger.Info("Info test");
+        Logger.Warning("Warning test");
+        Logger.Error("Error test", new Exception());
 
-        // Assert - If no exception is thrown, the test passes
-        Assert.IsTrue(true);
+        // Assert - verify all messages are stored
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(3, messages.Count);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
+        Assert.AreEqual(LogLevel.Warning, messages[1].Level);
+        Assert.AreEqual(LogLevel.Error, messages[2].Level);
     }
 
-    /// <summary>Tests that logging works with all features enabled.</summary>
+    /// <summary>Tests that exceptions are stored along with messages.</summary>
     [TestMethod]
-    public void AllFeatures_WorkWhenEnabled() {
+    public void Console_ExceptionsAreStored() {
         // Arrange
         Logger.UseConsole = true;
-        Logger.UseFile = true;
-        Logger.EnableDebugLogging = true;
+        var exceptionMessage = "Test exception message";
 
         // Act
-        Logger.Info("Info message");
-        Logger.Warning("Warning message");
-        Logger.Error("Error message", new Exception("Test"));
-        Logger.Debug("Debug message");
+        Logger.Error("Error message", new InvalidOperationException(exceptionMessage));
 
-        // Assert - If no exception is thrown, the test passes
-        Assert.IsTrue(true);
+        // Assert - verify exception is stored with the message
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.IsNotNull(messages[0].Exception);
+        Assert.AreEqual(exceptionMessage, messages[0].Exception?.Message);
     }
 
     #endregion
 
     #region Edge Cases Tests
 
-    /// <summary>Tests that empty message strings are handled.</summary>
+    /// <summary>Tests that empty message strings are stored correctly.</summary>
     [TestMethod]
-    public void EmptyMessage_IsHandled() {
-        // Arrange
-        Logger.UseConsole = false;
-
-        // Act
+    public void EmptyMessage_IsStoredCorrectly() {
+        // Arrange & Act
         Logger.Info("");
-        Logger.Warning("");
-        Logger.Error("", new Exception());
-        Logger.Debug("");
 
         // Assert
-        Assert.IsTrue(true);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(string.Empty, messages[0].Message);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
     }
 
-    /// <summary>Tests that very long messages are handled.</summary>
+    /// <summary>Tests that very long messages are stored and preserved exactly.</summary>
     [TestMethod]
-    public void VeryLongMessage_IsHandled() {
+    public void VeryLongMessage_IsPreservedExactly() {
         // Arrange
-        Logger.UseConsole = false;
         var longMessage = new string('A', 10000);
 
         // Act
         Logger.Info(longMessage);
 
         // Assert
-        Assert.AreEqual(10000, longMessage.Length);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(longMessage, messages[0].Message);
+        Assert.AreEqual(10000, messages[0].Message.Length);
     }
 
-    /// <summary>Tests that special characters in messages are preserved.</summary>
+    /// <summary>Tests that special characters in messages are preserved exactly.</summary>
     [TestMethod]
-    public void SpecialCharacters_ArePreserved() {
+    public void SpecialCharacters_ArePreservedExactly() {
         // Arrange
-        Logger.UseConsole = false;
         var specialMessage = "Message with special chars: !@#$%^&*()_+-=[]{}|;:',.<>?/";
 
         // Act
         Logger.Info(specialMessage);
 
         // Assert
-        Assert.IsNotNull(specialMessage);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(specialMessage, messages[0].Message);
     }
 
-    /// <summary>Tests that unicode characters in messages are handled.</summary>
+    /// <summary>Tests that unicode characters in messages are preserved exactly.</summary>
     [TestMethod]
-    public void UnicodeCharacters_AreHandled() {
+    public void UnicodeCharacters_ArePreservedExactly() {
         // Arrange
-        Logger.UseConsole = false;
         var unicodeMessage = "Unicode test: 你好 мир 🌍";
 
         // Act
         Logger.Info(unicodeMessage);
 
         // Assert
-        Assert.IsNotNull(unicodeMessage);
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(unicodeMessage, messages[0].Message);
+    }
+
+    /// <summary>Tests that newline characters in messages are preserved.</summary>
+    [TestMethod]
+    public void NewlineCharacters_ArePreserved() {
+        // Arrange
+        var multilineMessage = "Line 1\nLine 2\nLine 3";
+
+        // Act
+        Logger.Info(multilineMessage);
+
+        // Assert
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(1, messages.Count);
+        Assert.AreEqual(multilineMessage, messages[0].Message);
+    }
+
+    #endregion
+
+    #region Integration Tests
+
+    /// <summary>Tests that all logging methods work together and store all messages.</summary>
+    [TestMethod]
+    public void AllMethods_StoreCorrectly() {
+        // Arrange & Act
+        Logger.Info("Information message");
+        Logger.Warning("Warning message");
+        Logger.Error("Error message", new Exception("Test error"));
+        Logger.EnableDebugLogging = true;
+        Logger.Debug("Debug message");
+
+        // Assert
+        var messages = Logger.GetMessages();
+        Assert.AreEqual(4, messages.Count);
+        Assert.AreEqual(LogLevel.Info, messages[0].Level);
+        Assert.AreEqual(LogLevel.Warning, messages[1].Level);
+        Assert.AreEqual(LogLevel.Error, messages[2].Level);
+        Assert.AreEqual(LogLevel.Debug, messages[3].Level);
+    }
+
+    /// <summary>Tests that Reset clears all stored messages.</summary>
+    [TestMethod]
+    public void Reset_ClearsAllStoredMessages() {
+        // Arrange
+        Logger.Info("Message 1");
+        Logger.Warning("Message 2");
+        Logger.Error("Message 3", new Exception());
+
+        // Verify messages were stored
+        Assert.AreEqual(3, Logger.GetMessages().Count);
+
+        // Act
+        Logger.Reset();
+
+        // Assert
+        Assert.AreEqual(0, Logger.GetMessages().Count);
+        Assert.IsTrue(Logger.UseConsole);
+        Assert.IsFalse(Logger.UseFile);
+        Assert.IsFalse(Logger.EnableDebugLogging);
+    }
+
+    /// <summary>Tests that Reset restores default configuration.</summary>
+    [TestMethod]
+    public void Reset_RestoresDefaultConfiguration() {
+        // Arrange
+        Logger.UseConsole = false;
+        Logger.UseFile = true;
+        Logger.EnableDebugLogging = true;
+
+        // Act
+        Logger.Reset();
+
+        // Assert
+        Assert.IsTrue(Logger.UseConsole, "UseConsole should be true after reset");
+        Assert.IsFalse(Logger.UseFile, "UseFile should be false after reset");
+        Assert.IsFalse(Logger.EnableDebugLogging, "EnableDebugLogging should be false after reset");
     }
 
     #endregion

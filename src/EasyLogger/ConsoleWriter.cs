@@ -22,7 +22,7 @@ internal static class ConsoleWriter {
             _ => originalColor
         };
 
-        Console.WriteLine($"[{logMessage.Timestamp:O}] [{logMessage.Level}] {logMessage.Message}");
+        Console.WriteLine(logMessage.ToString());
         if (logMessage.Exception != null) Console.WriteLine($"Exception: {logMessage.Exception}");
 
         Console.ForegroundColor = originalColor;
