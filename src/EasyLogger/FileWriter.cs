@@ -70,12 +70,24 @@ internal static class FileWriter {
     /// <summary>Ensures the StreamWriter is initialized for writing.</summary>
     private static void EnsureWriterInitialized() {
         if (_writer == null) {
-            var fileStream = new FileStream(
-                LogFilePath,
-                FileMode.Append,
-                FileAccess.Write,
-                FileShare.Read);
-            _writer = new StreamWriter(fileStream) { AutoFlush = true };
+            FileStream? fileStream = null;
+            try {
+                fileStream = new FileStream(
+                    LogFilePath,
+                    FileMode.Append,
+                    FileAccess.Write,
+                    FileShare.Read);
+                // StreamWriter takes ownership of fileStream (leaveOpen: false) and will dispose it.
+                // Specify UTF-8 encoding for consistent behavior across environments.
+                _writer = new StreamWriter(fileStream, System.Text.Encoding.UTF8, leaveOpen: false) {
+                    AutoFlush = true
+                };
+            }
+            catch {
+                // If StreamWriter creation fails, dispose the FileStream
+                fileStream?.Dispose();
+                throw;
+            }
         }
     }
 
