@@ -499,6 +499,50 @@ public sealed class LoggerTests {
 
     #endregion
 
+    #region RemoveOlderThan Tests
+
+    /// <summary>Tests that RemoveOlderThan removes older messages from Logger storage.</summary>
+    [TestMethod]
+    public void RemoveOlderThan_RemovesOlderMessages() {
+        // Arrange - log some messages
+        Logger.Info("Message 1");
+        Logger.Info("Message 2");
+        Assert.HasCount(2, Logger.GetMessages());
+
+        // Act - remove with a future cutoff (should remove all)
+        Logger.RemoveOlderThan(DateTime.UtcNow.AddSeconds(1));
+
+        // Assert
+        Assert.IsEmpty(Logger.GetMessages());
+    }
+
+    /// <summary>Tests that RemoveOlderThan retains messages newer than cutoff.</summary>
+    [TestMethod]
+    public void RemoveOlderThan_RetainsNewerMessages() {
+        // Arrange - log some messages
+        Logger.Info("Message 1");
+        Logger.Info("Message 2");
+        Assert.HasCount(2, Logger.GetMessages());
+
+        // Act - remove with a distant past cutoff (should retain all)
+        Logger.RemoveOlderThan(DateTime.UtcNow.AddYears(-1));
+
+        // Assert - all messages should be retained
+        Assert.HasCount(2, Logger.GetMessages());
+    }
+
+    /// <summary>Tests that RemoveOlderThan on empty storage does not throw.</summary>
+    [TestMethod]
+    public void RemoveOlderThan_OnEmptyStorage_DoesNotThrow() {
+        // Arrange - storage is empty after Reset
+
+        // Act & Assert - should not throw
+        Logger.RemoveOlderThan(DateTime.UtcNow);
+        Assert.IsEmpty(Logger.GetMessages());
+    }
+
+    #endregion
+
     #region File Writing Integration Tests
 
     /// <summary>Gets the path to the log file used by FileWriter.</summary>
