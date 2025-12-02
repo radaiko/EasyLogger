@@ -43,6 +43,12 @@ public sealed class FileWriterTests {
         }
     }
 
+    /// <summary>Creates a test log message with the specified message text.</summary>
+    /// <param name="message">The message text for the log message.</param>
+    /// <returns>A new LogMessage instance with Info level.</returns>
+    private static LogMessage CreateTestLogMessage(string message)
+        => new(LogLevel.Info, message, null, "TestMethod", 1);
+
     #region Flush Tests
 
     /// <summary>Tests that Flush does not throw when the writer has not been initialized.</summary>
@@ -58,8 +64,7 @@ public sealed class FileWriterTests {
     [TestMethod]
     public void Flush_AfterWrite_DoesNotThrow() {
         // Arrange - write a message to initialize the writer
-        var logMessage = new LogMessage(LogLevel.Info, "Test message", null, "TestMethod", 1);
-        FileWriter.Write(logMessage);
+        FileWriter.Write(CreateTestLogMessage("Test message"));
 
         // Act & Assert - should not throw
         FileWriter.Flush();
@@ -69,8 +74,7 @@ public sealed class FileWriterTests {
     [TestMethod]
     public void Flush_CalledMultipleTimes_DoesNotThrow() {
         // Arrange - write a message to initialize the writer
-        var logMessage = new LogMessage(LogLevel.Info, "Test message", null, "TestMethod", 1);
-        FileWriter.Write(logMessage);
+        FileWriter.Write(CreateTestLogMessage("Test message"));
 
         // Act & Assert - calling Flush multiple times should not throw
         FileWriter.Flush();
@@ -82,8 +86,7 @@ public sealed class FileWriterTests {
     [TestMethod]
     public void Flush_AfterClose_DoesNotThrow() {
         // Arrange - write a message, then close the writer
-        var logMessage = new LogMessage(LogLevel.Info, "Test message", null, "TestMethod", 1);
-        FileWriter.Write(logMessage);
+        FileWriter.Write(CreateTestLogMessage("Test message"));
         FileWriter.Close();
 
         // Act & Assert - Flush after Close should not throw
@@ -95,8 +98,7 @@ public sealed class FileWriterTests {
     public void Flush_EnsuresDataWrittenToFile() {
         // Arrange
         var message = "Message to be flushed";
-        var logMessage = new LogMessage(LogLevel.Info, message, null, "TestMethod", 1);
-        FileWriter.Write(logMessage);
+        FileWriter.Write(CreateTestLogMessage(message));
 
         // Act
         FileWriter.Flush();
@@ -112,9 +114,7 @@ public sealed class FileWriterTests {
     public void Flush_InWriteFlushSequence_WorksCorrectly() {
         // Arrange & Act - perform multiple write-flush sequences
         for (int i = 1; i <= 3; i++) {
-            var message = $"Message {i}";
-            var logMessage = new LogMessage(LogLevel.Info, message, null, "TestMethod", i);
-            FileWriter.Write(logMessage);
+            FileWriter.Write(CreateTestLogMessage($"Message {i}"));
             FileWriter.Flush();
         }
 
@@ -143,8 +143,7 @@ public sealed class FileWriterTests {
     [TestMethod]
     public void Close_CalledMultipleTimes_DoesNotThrow() {
         // Arrange - write a message to initialize the writer
-        var logMessage = new LogMessage(LogLevel.Info, "Test message", null, "TestMethod", 1);
-        FileWriter.Write(logMessage);
+        FileWriter.Write(CreateTestLogMessage("Test message"));
 
         // Act & Assert - calling Close multiple times should not throw
         FileWriter.Close();
