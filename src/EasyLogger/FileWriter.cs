@@ -31,7 +31,9 @@ internal static class FileWriter {
         try {
             lock (WriteLock) {
                 EnsureWriterInitialized();
-                _writer!.WriteLine(logMessage);
+                if (_writer != null) {
+                    _writer.WriteLine(logMessage);
+                }
             }
         }
         catch (Exception ex) {
