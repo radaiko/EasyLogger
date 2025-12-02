@@ -652,8 +652,8 @@ public sealed class LoggerTests {
             Assert.IsGreaterThanOrEqualTo(0, firstIndex, "First message should be in file");
             Assert.IsGreaterThanOrEqualTo(0, secondIndex, "Second message should be in file");
             Assert.IsGreaterThanOrEqualTo(0, thirdIndex, "Third message should be in file");
-            Assert.IsLessThan(secondIndex, firstIndex, "First message should appear before second");
-            Assert.IsLessThan(thirdIndex, secondIndex, "Second message should appear before third");
+            Assert.IsLessThan(firstIndex, secondIndex, "First message should appear before second");
+            Assert.IsLessThan(secondIndex, thirdIndex, "Second message should appear before third");
         }
         finally {
             CleanupLogFile();
