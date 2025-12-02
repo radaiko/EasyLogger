@@ -23,7 +23,7 @@ internal static class ConsoleWriter {
         };
 
         try {
-            Console.WriteLine(logMessage.ToString());
+            Console.WriteLine(logMessage);
             if (logMessage.Exception != null)
                 Console.WriteLine($"Exception: {logMessage.Exception}");
         }
