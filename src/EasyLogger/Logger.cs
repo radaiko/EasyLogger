@@ -16,6 +16,9 @@ public static class Logger {
     /// <summary>Storage for maintaining logged messages in memory.</summary>
     private static readonly Storage Storage = new();
 
+    /// <summary>Lock object to synchronize access to static configuration state.</summary>
+    private static readonly Lock ConfigLock = new();
+
     /// <summary>Gets or sets a value indicating whether log messages should be written to the console.</summary>
     public static bool UseConsole { get; set; } = true;
 
@@ -55,12 +58,17 @@ public static class Logger {
         => Write(new LogMessage(LogLevel.Debug, message, null, caller, lineNumber));
 
     /// <summary>Resets all static state (flags and internal storage) to their default values.</summary>
-    /// <remarks>This method is primarily intended for test cleanup to ensure isolated test execution.</remarks>
+    /// <remarks>
+    /// This method is primarily intended for test cleanup to ensure isolated test execution.
+    /// The reset operation is synchronized to prevent race conditions with concurrent logging operations.
+    /// </remarks>
     public static void Reset() {
-        UseConsole = true;
-        UseFile = false;
-        EnableDebugLogging = false;
-        Storage.Clear();
+        lock (ConfigLock) {
+            UseConsole = true;
+            UseFile = false;
+            EnableDebugLogging = false;
+            Storage.Clear();
+        }
     }
 
     /// <summary>Gets a read-only view of all logged messages in the internal storage.</summary>
@@ -72,14 +80,26 @@ public static class Logger {
 
     /// <summary>Writes a log message to configured output targets.</summary>
     /// <param name="logMessage">The log message to write.</param>
+    /// <remarks>
+    /// Configuration flags are read under a lock to ensure consistent behavior
+    /// when Reset() is called concurrently.
+    /// </remarks>
     private static void Write(LogMessage logMessage) {
-        if (logMessage.Level == LogLevel.Debug && !EnableDebugLogging) {
+        // Read configuration under lock to ensure consistent snapshot during Reset()
+        bool useConsole, useFile, enableDebugLogging;
+        lock (ConfigLock) {
+            enableDebugLogging = EnableDebugLogging;
+            useConsole = UseConsole;
+            useFile = UseFile;
+        }
+
+        if (logMessage.Level == LogLevel.Debug && !enableDebugLogging) {
             return;
         }
         Storage.Add(logMessage);
-        if (UseConsole)
+        if (useConsole)
             ConsoleWriter.Write(logMessage);
-        if (UseFile)
+        if (useFile)
             FileWriter.Write(logMessage);
     }
 }
