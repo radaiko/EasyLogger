@@ -20,10 +20,10 @@ internal static class FileWriter {
     );
 
     /// <summary>Persistent StreamWriter for efficient file writes.</summary>
-    private static StreamWriter? _writer;
+    private static volatile StreamWriter? _writer;
 
     /// <summary>Indicates whether initialization has permanently failed.</summary>
-    private static bool _initializationFailed;
+    private static volatile bool _initializationFailed;
 
     /// <summary>Writes a log message to a file in a thread-safe manner.</summary>
     /// <param name="logMessage">The log message to write to file.</param>
@@ -37,9 +37,16 @@ internal static class FileWriter {
             }
         }
         catch (Exception ex) {
-            // Swallow IO exceptions to prevent crashing callers.
-            // In production, you might want to log this to a fallback mechanism.
-            System.Diagnostics.Debug.WriteLine($"Failed to write to log file: {ex.Message}");
+            // Log initialization failures prominently since they disable file logging permanently
+            if (_initializationFailed) {
+                System.Diagnostics.Debug.WriteLine($"[EasyLogger] CRITICAL: File logging initialization failed and is now permanently disabled. Error: {ex.Message}");
+                ConsoleWriter.Write(new LogMessage(LogLevel.Error, $"File logging initialization failed: {ex.Message}", ex, nameof(FileWriter), 0));
+            }
+            else {
+                // Swallow IO exceptions to prevent crashing callers.
+                // In production, you might want to log this to a fallback mechanism.
+                System.Diagnostics.Debug.WriteLine($"Failed to write to log file: {ex.Message}");
+            }
         }
     }
 
@@ -69,7 +76,7 @@ internal static class FileWriter {
                     _writer = null;
                 }
             }
-            _initializationFailed = false; // Reset failure flag to allow reinitialization
+            // _initializationFailed = false; // Do not reset failure flag here; permanent until explicit recovery
         }
     }
 
@@ -88,9 +95,7 @@ internal static class FileWriter {
                     FileShare.Read);
                 // StreamWriter takes ownership of fileStream (leaveOpen: false) and will dispose it.
                 // Specify UTF-8 encoding for consistent behavior across environments.
-                _writer = new StreamWriter(fileStream, System.Text.Encoding.UTF8, leaveOpen: false) {
-                    AutoFlush = true
-                };
+                _writer = new StreamWriter(fileStream, System.Text.Encoding.UTF8, leaveOpen: false);
             }
             catch {
                 // If StreamWriter creation fails, dispose the FileStream
