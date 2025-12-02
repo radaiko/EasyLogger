@@ -19,21 +19,13 @@ internal static class FileWriter {
         "logs.txt"
     );
 
-    /// <summary>Persistent StreamWriter for efficient file writes.</summary>
-    private static StreamWriter? _writer;
-
-    /// <summary>Indicates whether initialization has permanently failed.</summary>
-    private static bool _initializationFailed;
-
     /// <summary>Writes a log message to a file in a thread-safe manner.</summary>
     /// <param name="logMessage">The log message to write to file.</param>
     internal static void Write(LogMessage logMessage) {
         try {
             lock (WriteLock) {
-                EnsureWriterInitialized();
-                if (_writer != null) {
-                    _writer.WriteLine(logMessage);
-                }
+                var formattedMessage = $"{logMessage}\n";
+                File.AppendAllText(LogFilePath, formattedMessage);
             }
         }
         catch (Exception ex) {
@@ -43,63 +35,24 @@ internal static class FileWriter {
         }
     }
 
-    /// <summary>Flushes the internal buffer to the underlying file.</summary>
-    internal static void Flush() {
+    /// <summary>Closes and performs cleanup operations on the log file.</summary>
+    /// <remarks>
+    /// This method ensures proper closure of any file resources and can be extended
+    /// for file rotation and cleanup operations in the future.
+    /// </remarks>
+    internal static void Close() {
         try {
             lock (WriteLock) {
-                _writer?.Flush();
+                // Since we use File.AppendAllText(), there are no open file handles to close.
+                // This method serves as a placeholder for future file rotation and cleanup logic.
+                // Potential enhancements:
+                // - Implement log file rotation based on size or date
+                // - Archive old log files
+                // - Delete logs older than a certain retention period
             }
         }
         catch (Exception ex) {
-            System.Diagnostics.Debug.WriteLine($"Failed to flush log file: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to close log file: {ex.Message}");
         }
     }
-
-    /// <summary>Closes the file writer and releases all resources.</summary>
-    internal static void Close() {
-        lock (WriteLock) {
-            if (_writer != null) {
-                try {
-                    _writer.Dispose();
-                }
-                catch (Exception ex) {
-                    System.Diagnostics.Debug.WriteLine($"Failed to close log file: {ex.Message}");
-                }
-                finally {
-                    _writer = null;
-                }
-            }
-            _initializationFailed = false; // Reset failure flag to allow reinitialization
-        }
-    }
-
-    /// <summary>Ensures the StreamWriter is initialized for writing.</summary>
-    private static void EnsureWriterInitialized() {
-        if (_initializationFailed) {
-            return; // Skip initialization if a previous attempt failed permanently
-        }
-        if (_writer == null) {
-            FileStream? fileStream = null;
-            try {
-                fileStream = new FileStream(
-                    LogFilePath,
-                    FileMode.Append,
-                    FileAccess.Write,
-                    FileShare.Read);
-                // StreamWriter takes ownership of fileStream (leaveOpen: false) and will dispose it.
-                // Specify UTF-8 encoding for consistent behavior across environments.
-                _writer = new StreamWriter(fileStream, System.Text.Encoding.UTF8, leaveOpen: false) {
-                    AutoFlush = true
-                };
-            }
-            catch {
-                // If StreamWriter creation fails, dispose the FileStream
-                fileStream?.Dispose();
-                _initializationFailed = true; // Mark as permanently failed to avoid repeated attempts
-                throw;
-            }
-        }
-    }
-
-    // TODO: Add methods for managing log files, such as rotation and cleanup
 }
