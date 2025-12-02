@@ -542,4 +542,275 @@ public sealed class LoggerTests {
     }
 
     #endregion
+
+    #region File Writing Integration Tests
+
+    /// <summary>Gets the path to the log file used by FileWriter.</summary>
+    private static string LogFilePath => Path.Combine(AppContext.BaseDirectory, "logs.txt");
+
+    /// <summary>Deletes the log file if it exists to ensure clean test state.</summary>
+    private static void CleanupLogFile() {
+        if (File.Exists(LogFilePath)) {
+            File.Delete(LogFilePath);
+        }
+    }
+
+    /// <summary>Tests that an info message is written to the file when UseFile is enabled.</summary>
+    [TestMethod]
+    public void FileWriter_InfoMessage_WrittenToFile() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        var message = "Test info message for file";
+
+        try {
+            // Act
+            Logger.Info(message);
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            Assert.Contains(message, fileContent, "File should contain the logged message");
+            Assert.Contains("[Info]", fileContent, "File should contain the log level");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that a warning message is written to the file when UseFile is enabled.</summary>
+    [TestMethod]
+    public void FileWriter_WarningMessage_WrittenToFile() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        var message = "Test warning message for file";
+
+        try {
+            // Act
+            Logger.Warning(message);
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            Assert.Contains(message, fileContent, "File should contain the logged message");
+            Assert.Contains("[Warning]", fileContent, "File should contain the log level");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that an error message with exception is written to the file when UseFile is enabled.</summary>
+    [TestMethod]
+    public void FileWriter_ErrorMessage_WrittenToFile() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        var message = "Test error message for file";
+        var exception = new InvalidOperationException("Test exception");
+
+        try {
+            // Act
+            Logger.Error(message, exception);
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            Assert.Contains(message, fileContent, "File should contain the logged message");
+            Assert.Contains("[Error]", fileContent, "File should contain the log level");
+            Assert.Contains("InvalidOperationException", fileContent, "File should contain the exception type");
+            Assert.Contains("Test exception", fileContent, "File should contain the exception message");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that a debug message is written to the file when both UseFile and EnableDebugLogging are enabled.</summary>
+    [TestMethod]
+    public void FileWriter_DebugMessage_WrittenWhenEnabled() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        Logger.EnableDebugLogging = true;
+        var message = "Test debug message for file";
+
+        try {
+            // Act
+            Logger.Debug(message);
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            Assert.Contains(message, fileContent, "File should contain the logged message");
+            Assert.Contains("[Debug]", fileContent, "File should contain the log level");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that debug messages are NOT written to file when EnableDebugLogging is disabled.</summary>
+    [TestMethod]
+    public void FileWriter_DebugMessage_NotWrittenWhenDisabled() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        Logger.EnableDebugLogging = false;
+        var message = "Debug message should not appear";
+
+        try {
+            // Act
+            Logger.Debug(message);
+
+            // Assert - file should not exist because debug was the only message and it was disabled
+            Assert.IsFalse(File.Exists(LogFilePath), "Log file should not be created when only disabled debug messages are logged");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that multiple messages are appended to the file in order.</summary>
+    [TestMethod]
+    public void FileWriter_MultipleMessages_AppendedInOrder() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+
+        try {
+            // Act
+            Logger.Info("First message");
+            Logger.Warning("Second message");
+            Logger.Info("Third message");
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            
+            var firstIndex = fileContent.IndexOf("First message", StringComparison.Ordinal);
+            var secondIndex = fileContent.IndexOf("Second message", StringComparison.Ordinal);
+            var thirdIndex = fileContent.IndexOf("Third message", StringComparison.Ordinal);
+            
+            Assert.IsGreaterThanOrEqualTo(firstIndex, 0, "First message should be in file");
+            Assert.IsGreaterThanOrEqualTo(secondIndex, 0, "Second message should be in file");
+            Assert.IsGreaterThanOrEqualTo(thirdIndex, 0, "Third message should be in file");
+            Assert.IsLessThan(firstIndex, secondIndex, "First message should appear before second");
+            Assert.IsLessThan(secondIndex, thirdIndex, "Second message should appear before third");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that nothing is written to the file when UseFile is disabled.</summary>
+    [TestMethod]
+    public void FileWriter_NoWriteWhenDisabled() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = false;
+
+        try {
+            // Act
+            Logger.Info("This should not be in the file");
+
+            // Assert
+            Assert.IsFalse(File.Exists(LogFilePath), "Log file should not be created when UseFile is false");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that special characters are preserved when written to file.</summary>
+    [TestMethod]
+    public void FileWriter_SpecialCharacters_PreservedInFile() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        var specialMessage = "Special chars: !@#$%^&*()_+-=[]{}|;:',.<>?/";
+
+        try {
+            // Act
+            Logger.Info(specialMessage);
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            Assert.Contains(specialMessage, fileContent, "File should contain the special characters exactly");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that unicode characters are preserved when written to file.</summary>
+    [TestMethod]
+    public void FileWriter_UnicodeCharacters_PreservedInFile() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+        var unicodeMessage = "Unicode: 你好 мир 🌍";
+
+        try {
+            // Act
+            Logger.Info(unicodeMessage);
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            Assert.Contains(unicodeMessage, fileContent, "File should contain the unicode characters exactly");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that the file content contains timestamp information.</summary>
+    [TestMethod]
+    public void FileWriter_ContainsTimestamp() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+
+        try {
+            // Act
+            Logger.Info("Message with timestamp");
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            // The LogMessage.ToString() format includes ISO 8601 timestamp like [2025-12-01T...]
+            Assert.Contains("[20", fileContent, "File should contain a timestamp starting with year");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    /// <summary>Tests that the file content contains caller information.</summary>
+    [TestMethod]
+    public void FileWriter_ContainsCallerInfo() {
+        // Arrange
+        CleanupLogFile();
+        Logger.UseFile = true;
+
+        try {
+            // Act
+            Logger.Info("Message with caller info");
+
+            // Assert
+            Assert.IsTrue(File.Exists(LogFilePath), "Log file should be created");
+            var fileContent = File.ReadAllText(LogFilePath);
+            // The LogMessage.ToString() format includes caller info like (Caller: MethodName, Line: 123)
+            Assert.Contains("Caller:", fileContent, "File should contain caller information");
+            Assert.Contains("Line:", fileContent, "File should contain line number information");
+        }
+        finally {
+            CleanupLogFile();
+        }
+    }
+
+    #endregion
 }
