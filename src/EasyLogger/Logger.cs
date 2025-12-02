@@ -16,14 +16,31 @@ public static class Logger {
     /// <summary>Storage for maintaining logged messages in memory.</summary>
     private static readonly Storage Storage = new();
 
+    /// <summary>Lock object to synchronize the Reset() operation.</summary>
+    private static readonly Lock ResetLock = new();
+
+    // Backing fields using volatile to ensure visibility across threads
+    private static volatile bool _useConsole = true;
+    private static volatile bool _useFile;
+    private static volatile bool _enableDebugLogging;
+
     /// <summary>Gets or sets a value indicating whether log messages should be written to the console.</summary>
-    public static bool UseConsole { get; set; } = true;
+    public static bool UseConsole {
+        get => _useConsole;
+        set => _useConsole = value;
+    }
 
     /// <summary>Gets or sets a value indicating whether log messages should be written to files.</summary>
-    public static bool UseFile { get; set; }
+    public static bool UseFile {
+        get => _useFile;
+        set => _useFile = value;
+    }
 
     /// <summary>Gets or sets a value indicating whether debug log messages are enabled.</summary>
-    public static bool EnableDebugLogging { get; set; }
+    public static bool EnableDebugLogging {
+        get => _enableDebugLogging;
+        set => _enableDebugLogging = value;
+    }
 
     /// <summary>Logs an informational message.</summary>
     /// <param name="message">The message to log.</param>
@@ -55,13 +72,20 @@ public static class Logger {
         => Write(new LogMessage(LogLevel.Debug, message, null, caller, lineNumber));
 
     /// <summary>Resets all static state (flags and internal storage) to their default values.</summary>
-    /// <remarks>This method is primarily intended for test cleanup to ensure isolated test execution.</remarks>
+    /// <remarks>
+    /// <para>This method is primarily intended for test cleanup to ensure isolated test execution.</para>
+    /// <para>The reset operation is synchronized to prevent race conditions with concurrent Reset() calls.
+    /// Configuration flags use volatile fields to ensure visibility across threads without requiring
+    /// locks on every read/write operation.</para>
+    /// </remarks>
     public static void Reset() {
-        UseConsole = true;
-        UseFile = false;
-        EnableDebugLogging = false;
-        Storage.Clear();
-        FileWriter.Close();
+        lock (ResetLock) {
+            _useConsole = true;
+            _useFile = false;
+            _enableDebugLogging = false;
+            Storage.Clear();
+            FileWriter.Close();
+        }
     }
 
     /// <summary>Gets a read-only view of all logged messages in the internal storage.</summary>
@@ -71,16 +95,26 @@ public static class Logger {
         return Storage.GetAll();
     }
 
+    /// <summary>Removes all log messages with a timestamp older than the specified cutoff date.</summary>
+    /// <param name="cutoff">The cutoff date; messages older than this are removed.</param>
+    public static void RemoveOlderThan(DateTime cutoff) {
+        Storage.RemoveOlderThan(cutoff);
+    }
+
     /// <summary>Writes a log message to configured output targets.</summary>
     /// <param name="logMessage">The log message to write.</param>
+    /// <remarks>
+    /// Configuration flags are read from volatile fields to ensure visibility of changes
+    /// made by Reset() or other threads, without the overhead of taking a lock.
+    /// </remarks>
     private static void Write(LogMessage logMessage) {
-        if (logMessage.Level == LogLevel.Debug && !EnableDebugLogging) {
+        if (logMessage.Level == LogLevel.Debug && !_enableDebugLogging) {
             return;
         }
         Storage.Add(logMessage);
-        if (UseConsole)
+        if (_useConsole)
             ConsoleWriter.Write(logMessage);
-        if (UseFile)
+        if (_useFile)
             FileWriter.Write(logMessage);
     }
 }
