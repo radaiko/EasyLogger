@@ -20,10 +20,10 @@ internal static class FileWriter {
     );
 
     /// <summary>Persistent StreamWriter for efficient file writes.</summary>
-    private static StreamWriter? _writer;
+    private static volatile StreamWriter? _writer;
 
     /// <summary>Indicates whether initialization has permanently failed.</summary>
-    private static bool _initializationFailed;
+    private static volatile bool _initializationFailed;
 
     /// <summary>Writes a log message to a file in a thread-safe manner.</summary>
     /// <param name="logMessage">The log message to write to file.</param>
