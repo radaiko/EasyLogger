@@ -1,5 +1,120 @@
 # GitHub Copilot Instructions for EasyLogger
 
+## Project Overview
+
+EasyLogger is a simple, lightweight logging library for .NET applications. It provides static logging methods for writing messages at various severity levels (Info, Warning, Error, Debug) with support for multiple output targets (console and file).
+
+## Technology Stack
+
+- **Language:** C# (latest)
+- **Framework:** .NET 10.0
+- **Testing Framework:** MSTest 4.0.1
+- **Solution Format:** slnx (modern solution format)
+- **Nullable Reference Types:** Enabled
+- **Implicit Usings:** Enabled
+
+## Build, Test, and Lint Commands
+
+All commands should be run from the `src/` directory:
+
+```bash
+# Restore dependencies
+dotnet restore
+
+# Build the solution
+dotnet build
+
+# Build in Release mode
+dotnet build --configuration Release
+
+# Run all tests
+dotnet test
+
+# Run tests with verbose output
+dotnet test --verbosity normal
+```
+
+## Project Structure
+
+```
+EasyLogger/
+├── .github/
+│   ├── copilot-instructions.md    # This file - Copilot instructions
+│   └── workflows/                 # GitHub Actions workflows
+├── src/
+│   ├── EasyLogger/                # Main library project
+│   │   ├── EasyLogger.csproj
+│   │   ├── Logger.cs              # Main static logger class
+│   │   ├── LogLevel.cs            # Enum for log severity levels
+│   │   ├── LogMessage.cs          # Log message data structure
+│   │   ├── Storage.cs             # In-memory log storage
+│   │   ├── ConsoleWriter.cs       # Console output writer
+│   │   └── FileWriter.cs          # File output writer
+│   ├── EasyLogger.Tests/          # Unit test project
+│   │   ├── EasyLogger.Tests.csproj
+│   │   ├── LoggerTests.cs         # Tests for Logger class
+│   │   ├── StorageTests.cs        # Tests for Storage class
+│   │   └── MSTestSettings.cs      # MSTest configuration
+│   └── EasyLogger.slnx            # Solution file
+├── .editorconfig                  # Code style configuration
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+## Coding Conventions
+
+### General Guidelines
+
+1. Use XML documentation comments (`///`) for all public types and members
+2. Follow C# naming conventions (PascalCase for public members, _camelCase for private fields)
+3. Use expression-bodied members where appropriate for single-line implementations
+4. Prefer `readonly` for fields that don't change after construction
+5. Use `volatile` for fields accessed from multiple threads without locking
+
+### Test Guidelines
+
+1. Use the Arrange-Act-Assert pattern for all tests
+2. Use `#region` blocks to organize tests by category
+3. Add `[DoNotParallelize]` attribute when tests share static state
+4. Include `[TestInitialize]` and `[TestCleanup]` methods for proper test isolation
+5. Use descriptive test method names following the pattern: `MethodName_Scenario_ExpectedBehavior`
+
+### Code Examples
+
+**Do:**
+```csharp
+/// <summary>Logs an informational message.</summary>
+/// <param name="message">The message to log.</param>
+public static void Info(string message)
+    => Write(new LogMessage(LogLevel.Info, message, null));
+```
+
+**Don't:**
+```csharp
+// Missing XML documentation
+// Inconsistent formatting
+public static void Info(string message) { Write(new LogMessage(LogLevel.Info, message, null)); }
+```
+
+## Boundaries and Restrictions
+
+### Do NOT:
+
+- Modify files in `bin/`, `obj/`, or `.nuget/` directories
+- Commit generated files or build artifacts
+- Add dependencies without checking for security vulnerabilities
+- Modify the LICENSE file
+- Remove or weaken existing test coverage
+- Use `Thread.Sleep()` in tests without a compelling reason
+
+### Always:
+
+- Run `dotnet test` before submitting changes
+- Ensure all new public APIs have XML documentation
+- Follow the existing code style as defined in `.editorconfig`
+- Add tests for new functionality
+
 ## File Header Format
 
 Every C# file in this project should start with the following header format:
