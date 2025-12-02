@@ -37,9 +37,16 @@ internal static class FileWriter {
             }
         }
         catch (Exception ex) {
-            // Swallow IO exceptions to prevent crashing callers.
-            // In production, you might want to log this to a fallback mechanism.
-            System.Diagnostics.Debug.WriteLine($"Failed to write to log file: {ex.Message}");
+            // Log initialization failures prominently since they disable file logging permanently
+            if (_initializationFailed) {
+                System.Diagnostics.Debug.WriteLine($"[EasyLogger] CRITICAL: File logging initialization failed and is now permanently disabled. Error: {ex.Message}");
+                ConsoleWriter.Write(new LogMessage(LogLevel.Error, $"File logging initialization failed: {ex.Message}", ex, nameof(FileWriter), 0));
+            }
+            else {
+                // Swallow IO exceptions to prevent crashing callers.
+                // In production, you might want to log this to a fallback mechanism.
+                System.Diagnostics.Debug.WriteLine($"Failed to write to log file: {ex.Message}");
+            }
         }
     }
 
