@@ -649,9 +649,9 @@ public sealed class LoggerTests {
             var secondIndex = fileContent.IndexOf("Second message", StringComparison.Ordinal);
             var thirdIndex = fileContent.IndexOf("Third message", StringComparison.Ordinal);
             
-            Assert.IsGreaterThanOrEqualTo(0, firstIndex, "First message should be in file");
-            Assert.IsGreaterThanOrEqualTo(0, secondIndex, "Second message should be in file");
-            Assert.IsGreaterThanOrEqualTo(0, thirdIndex, "Third message should be in file");
+            Assert.IsGreaterThanOrEqualTo(firstIndex, 0, "First message should be in file");
+            Assert.IsGreaterThanOrEqualTo(secondIndex, 0, "Second message should be in file");
+            Assert.IsGreaterThanOrEqualTo(thirdIndex, 0, "Third message should be in file");
             Assert.IsLessThan(firstIndex, secondIndex, "First message should appear before second");
             Assert.IsLessThan(secondIndex, thirdIndex, "Second message should appear before third");
         }
