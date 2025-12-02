@@ -84,6 +84,7 @@ public static class Logger {
             _useFile = false;
             _enableDebugLogging = false;
             Storage.Clear();
+            FileWriter.Close();
         }
     }
 
