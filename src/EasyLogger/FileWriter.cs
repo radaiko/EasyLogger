@@ -22,6 +22,9 @@ internal static class FileWriter {
     /// <summary>Persistent StreamWriter for efficient file writes.</summary>
     private static StreamWriter? _writer;
 
+    /// <summary>Indicates whether initialization has permanently failed.</summary>
+    private static bool _initializationFailed;
+
     /// <summary>Writes a log message to a file in a thread-safe manner.</summary>
     /// <param name="logMessage">The log message to write to file.</param>
     internal static void Write(LogMessage logMessage) {
@@ -64,11 +67,15 @@ internal static class FileWriter {
                     _writer = null;
                 }
             }
+            _initializationFailed = false; // Reset failure flag to allow reinitialization
         }
     }
 
     /// <summary>Ensures the StreamWriter is initialized for writing.</summary>
     private static void EnsureWriterInitialized() {
+        if (_initializationFailed) {
+            return; // Skip initialization if a previous attempt failed permanently
+        }
         if (_writer == null) {
             FileStream? fileStream = null;
             try {
@@ -86,6 +93,7 @@ internal static class FileWriter {
             catch {
                 // If StreamWriter creation fails, dispose the FileStream
                 fileStream?.Dispose();
+                _initializationFailed = true; // Mark as permanently failed to avoid repeated attempts
                 throw;
             }
         }

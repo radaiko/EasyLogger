@@ -61,6 +61,7 @@ public static class Logger {
         UseFile = false;
         EnableDebugLogging = false;
         Storage.Clear();
+        FileWriter.Close();
     }
 
     /// <summary>Gets a read-only view of all logged messages in the internal storage.</summary>
