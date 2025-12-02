@@ -88,9 +88,7 @@ internal static class FileWriter {
                     FileShare.Read);
                 // StreamWriter takes ownership of fileStream (leaveOpen: false) and will dispose it.
                 // Specify UTF-8 encoding for consistent behavior across environments.
-                _writer = new StreamWriter(fileStream, System.Text.Encoding.UTF8, leaveOpen: false) {
-                    AutoFlush = true
-                };
+                _writer = new StreamWriter(fileStream, System.Text.Encoding.UTF8, leaveOpen: false);
             }
             catch {
                 // If StreamWriter creation fails, dispose the FileStream
