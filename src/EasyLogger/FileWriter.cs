@@ -69,7 +69,7 @@ internal static class FileWriter {
                     _writer = null;
                 }
             }
-            _initializationFailed = false; // Reset failure flag to allow reinitialization
+            // _initializationFailed = false; // Do not reset failure flag here; permanent until explicit recovery
         }
     }
 
