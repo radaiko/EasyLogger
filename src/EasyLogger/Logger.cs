@@ -70,6 +70,12 @@ public static class Logger {
         return Storage.GetAll();
     }
 
+    /// <summary>Removes all log messages with a timestamp older than the specified cutoff date.</summary>
+    /// <param name="cutoff">The cutoff date; messages older than this are removed.</param>
+    public static void RemoveOlderThan(DateTime cutoff) {
+        Storage.RemoveOlderThan(cutoff);
+    }
+
     /// <summary>Writes a log message to configured output targets.</summary>
     /// <param name="logMessage">The log message to write.</param>
     private static void Write(LogMessage logMessage) {
