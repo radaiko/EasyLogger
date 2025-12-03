@@ -3,7 +3,7 @@
 EasyLogger is a simple, lightweight logging library for .NET applications. It provides a static API for writing log messages to various outputs with minimal setup.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![NuGet](https://img.shields.io/nuget/v/EasyLogger.svg)](https://www.nuget.org/packages/EasyLogger)
+[![NuGet](https://img.shields.io/nuget/v/Radaiko.EasyLogger.svg)](https://www.nuget.org/packages/Radaiko.EasyLogger)
 
 ## Features
 
