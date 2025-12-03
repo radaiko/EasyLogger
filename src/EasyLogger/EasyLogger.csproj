@@ -5,7 +5,7 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PackageId>Ra.EasyLogger</PackageId>
+        <PackageId>Radaiko.EasyLogger</PackageId>
         <Authors>radaiko</Authors>
         <Description>A simple, lightweight logging library for .NET applications.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
