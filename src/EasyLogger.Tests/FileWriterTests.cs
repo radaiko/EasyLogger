@@ -10,27 +10,24 @@ namespace EasyLogger.Tests;
 
 /// <summary>Provides unit tests for the FileWriter class functionality.</summary>
 /// <remarks>
-/// Tests are marked as [DoNotParallelize] because the FileWriter class uses static state
+/// Tests are marked as [Collection("Serial Collection")] because the FileWriter class uses static state
 /// that is shared across all tests. Without this attribute, tests would interfere with
 /// each other when run in parallel.
 /// </remarks>
-[TestClass]
-[DoNotParallelize]
-public sealed class FileWriterTests {
+[Collection("Serial Collection")]
+public sealed class FileWriterTests : IDisposable {
     /// <summary>Gets the path to the log file used by FileWriter.</summary>
     private static string LogFilePath => Path.Combine(AppContext.BaseDirectory, "logs.txt");
 
-    /// <summary>Test setup method that runs before each test to reset FileWriter state.</summary>
-    [TestInitialize]
-    public void Setup() {
+    /// <summary>Initializes a new instance of the FileWriterTests class and resets FileWriter state.</summary>
+    public FileWriterTests() {
         // Close any existing file writer and clean up
         FileWriter.Close();
         CleanupLogFile();
     }
 
-    /// <summary>Test cleanup method that runs after each test to reset FileWriter state.</summary>
-    [TestCleanup]
-    public void Cleanup() {
+    /// <summary>Disposes resources and resets FileWriter state after each test.</summary>
+    public void Dispose() {
         // Close any existing file writer and clean up
         FileWriter.Close();
         CleanupLogFile();
@@ -52,16 +49,16 @@ public sealed class FileWriterTests {
     #region Flush Tests
 
     /// <summary>Tests that Flush does not throw when the writer has not been initialized.</summary>
-    [TestMethod]
+    [Fact]
     public void Flush_WhenWriterNotInitialized_DoesNotThrow() {
         // Arrange - writer is not initialized (no writes have been performed)
-        
+
         // Act & Assert - should not throw
         FileWriter.Flush();
     }
 
     /// <summary>Tests that Flush works correctly after writing a message.</summary>
-    [TestMethod]
+    [Fact]
     public void Flush_AfterWrite_DoesNotThrow() {
         // Arrange - write a message to initialize the writer
         FileWriter.Write(CreateTestLogMessage("Test message"));
@@ -71,7 +68,7 @@ public sealed class FileWriterTests {
     }
 
     /// <summary>Tests that Flush can be called multiple times safely.</summary>
-    [TestMethod]
+    [Fact]
     public void Flush_CalledMultipleTimes_DoesNotThrow() {
         // Arrange - write a message to initialize the writer
         FileWriter.Write(CreateTestLogMessage("Test message"));
@@ -83,7 +80,7 @@ public sealed class FileWriterTests {
     }
 
     /// <summary>Tests that Flush can be called after Close without throwing.</summary>
-    [TestMethod]
+    [Fact]
     public void Flush_AfterClose_DoesNotThrow() {
         // Arrange - write a message, then close the writer
         FileWriter.Write(CreateTestLogMessage("Test message"));
@@ -94,7 +91,7 @@ public sealed class FileWriterTests {
     }
 
     /// <summary>Tests that Flush ensures data is written to disk.</summary>
-    [TestMethod]
+    [Fact]
     public void Flush_EnsuresDataWrittenToFile() {
         // Arrange
         var message = "Message to be flushed";
@@ -104,13 +101,13 @@ public sealed class FileWriterTests {
         FileWriter.Flush();
 
         // Assert - file should exist and contain the message
-        Assert.IsTrue(File.Exists(LogFilePath), "Log file should exist after write and flush");
+        Assert.True(File.Exists(LogFilePath), "Log file should exist after write and flush");
         var fileContent = File.ReadAllText(LogFilePath);
-        Assert.Contains(message, fileContent, "File should contain the flushed message");
+        Assert.Contains(message, fileContent);
     }
 
     /// <summary>Tests that Flush works correctly in a sequence of write-flush operations.</summary>
-    [TestMethod]
+    [Fact]
     public void Flush_InWriteFlushSequence_WorksCorrectly() {
         // Arrange & Act - perform multiple write-flush sequences
         for (int i = 1; i <= 3; i++) {
@@ -119,11 +116,11 @@ public sealed class FileWriterTests {
         }
 
         // Assert - all messages should be in the file
-        Assert.IsTrue(File.Exists(LogFilePath), "Log file should exist");
+        Assert.True(File.Exists(LogFilePath), "Log file should exist");
         var fileContent = File.ReadAllText(LogFilePath);
-        Assert.Contains("Message 1", fileContent, "File should contain Message 1");
-        Assert.Contains("Message 2", fileContent, "File should contain Message 2");
-        Assert.Contains("Message 3", fileContent, "File should contain Message 3");
+        Assert.Contains("Message 1", fileContent);
+        Assert.Contains("Message 2", fileContent);
+        Assert.Contains("Message 3", fileContent);
     }
 
     #endregion
@@ -131,16 +128,16 @@ public sealed class FileWriterTests {
     #region Close Tests
 
     /// <summary>Tests that Close can be called when writer is not initialized.</summary>
-    [TestMethod]
+    [Fact]
     public void Close_WhenWriterNotInitialized_DoesNotThrow() {
         // Arrange - writer is not initialized
-        
+
         // Act & Assert - should not throw
         FileWriter.Close();
     }
 
     /// <summary>Tests that Close can be called multiple times safely.</summary>
-    [TestMethod]
+    [Fact]
     public void Close_CalledMultipleTimes_DoesNotThrow() {
         // Arrange - write a message to initialize the writer
         FileWriter.Write(CreateTestLogMessage("Test message"));

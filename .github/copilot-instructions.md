@@ -8,7 +8,8 @@ EasyLogger is a simple, lightweight logging library for .NET applications. It pr
 
 - **Language:** C# (latest)
 - **Framework:** .NET 10.0
-- **Testing Framework:** MSTest 4.0.1
+- **Testing Framework:** xUnit
+- **Build System:** .NET CLI
 - **Solution Format:** slnx (modern solution format)
 - **Nullable Reference Types:** Enabled
 - **Implicit Usings:** Enabled
