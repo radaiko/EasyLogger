@@ -10,11 +10,11 @@ namespace EasyLogger.Tests;
 
 /// <summary>Provides unit tests for the FileWriter class functionality.</summary>
 /// <remarks>
-/// Tests are marked as [Collection("Serial Collection")] because the FileWriter class uses static state
+/// Tests are marked as [Collection("SerialCollection")] because the FileWriter class uses static state
 /// that is shared across all tests. Without this attribute, tests would interfere with
 /// each other when run in parallel.
 /// </remarks>
-[Collection("Serial Collection")]
+[Collection("SerialCollection")]
 public sealed class FileWriterTests : IDisposable {
     /// <summary>Gets the path to the log file used by FileWriter.</summary>
     private static string LogFilePath => Path.Combine(AppContext.BaseDirectory, "logs.txt");

@@ -10,11 +10,11 @@ namespace EasyLogger.Tests;
 
 /// <summary>Provides unit tests for the Logger class functionality.</summary>
 /// <remarks>
-/// Tests are marked as [Collection("Serial Collection")] because the Logger class uses static state
+/// Tests are marked as [Collection("SerialCollection")] because the Logger class uses static state
 /// that is shared across all tests. Without this attribute, tests would interfere with
 /// each other when run in parallel, even with Reset() in Setup/Cleanup.
 /// </remarks>
-[Collection("Serial Collection")]
+[Collection("SerialCollection")]
 public sealed class LoggerTests : IDisposable {
     /// <summary>Initializes a new instance of the <see cref="LoggerTests"/> class and resets Logger state.</summary>
     public LoggerTests() {
