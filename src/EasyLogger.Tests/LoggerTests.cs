@@ -27,6 +27,7 @@ public sealed class LoggerTests : IDisposable {
     public void Dispose() {
         // Clear all logger state after each test for clean isolation
         Logger.Reset();
+        FileWriter.Close();
     }
 
     #region Info Logging Tests
