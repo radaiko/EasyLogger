@@ -79,7 +79,7 @@ Logger.Reset();
 Logger.Info("Test message");
 var messages = Logger.GetMessages();
 Assert.Single(messages);
-Assert.Equal("Test message", messages[0].Text);
+Assert.Equal("Test message", messages[0].Message);
 ```
 
 ## Requirements
