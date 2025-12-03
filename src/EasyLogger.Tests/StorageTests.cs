@@ -9,20 +9,26 @@
 namespace EasyLogger.Tests;
 
 /// <summary>Provides unit tests for the Storage class functionality.</summary>
-[TestClass]
-public sealed class StorageTests {
+[Collection("SerialCollection")]
+public sealed class StorageTests : IDisposable {
     private Storage _storage = null!;
 
-    /// <summary>Test setup method that runs before each test to create a fresh Storage instance.</summary>
-    [TestInitialize]
-    public void Setup() {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StorageTests"/> class and creates a fresh Storage instance.
+    /// </summary>
+    public StorageTests() {
         _storage = new Storage();
+    }
+
+    /// <summary>Performs cleanup after each test.</summary>
+    public void Dispose() {
+        _storage.Clear();
     }
 
     #region Add Tests
 
     /// <summary>Tests that Add stores a message correctly.</summary>
-    [TestMethod]
+    [Fact]
     public void Add_StoresMessage() {
         // Arrange
         var message = CreateLogMessage("Test message");
@@ -32,12 +38,12 @@ public sealed class StorageTests {
 
         // Assert
         var messages = _storage.GetAll();
-        Assert.HasCount(1, messages);
-        Assert.AreEqual("Test message", messages[0].Message);
+        Assert.Single(messages);
+        Assert.Equal("Test message", messages[0].Message);
     }
 
     /// <summary>Tests that Add stores multiple messages in order.</summary>
-    [TestMethod]
+    [Fact]
     public void Add_StoresMultipleMessagesInOrder() {
         // Arrange
         var message1 = CreateLogMessage("First");
@@ -51,10 +57,10 @@ public sealed class StorageTests {
 
         // Assert
         var messages = _storage.GetAll();
-        Assert.HasCount(3, messages);
-        Assert.AreEqual("First", messages[0].Message);
-        Assert.AreEqual("Second", messages[1].Message);
-        Assert.AreEqual("Third", messages[2].Message);
+        Assert.Equal(3, messages.Count);
+        Assert.Equal("First", messages[0].Message);
+        Assert.Equal("Second", messages[1].Message);
+        Assert.Equal("Third", messages[2].Message);
     }
 
     #endregion
@@ -62,29 +68,29 @@ public sealed class StorageTests {
     #region Clear Tests
 
     /// <summary>Tests that Clear removes all messages.</summary>
-    [TestMethod]
+    [Fact]
     public void Clear_RemovesAllMessages() {
         // Arrange
         _storage.Add(CreateLogMessage("Message 1"));
         _storage.Add(CreateLogMessage("Message 2"));
         _storage.Add(CreateLogMessage("Message 3"));
-        Assert.HasCount(3, _storage.GetAll());
+        Assert.Equal(3, _storage.GetAll().Count);
 
         // Act
         _storage.Clear();
 
         // Assert
-        Assert.IsEmpty(_storage.GetAll());
+        Assert.Empty(_storage.GetAll());
     }
 
     /// <summary>Tests that Clear on empty storage does not throw.</summary>
-    [TestMethod]
+    [Fact]
     public void Clear_OnEmptyStorage_DoesNotThrow() {
         // Arrange - storage is already empty
 
         // Act & Assert - should not throw
         _storage.Clear();
-        Assert.IsEmpty(_storage.GetAll());
+        Assert.Empty(_storage.GetAll());
     }
 
     #endregion
@@ -92,7 +98,7 @@ public sealed class StorageTests {
     #region RemoveOlderThan Tests
 
     /// <summary>Tests that RemoveOlderThan removes messages older than the cutoff.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_RemovesOlderMessages() {
         // Arrange
         var oldTime = DateTime.UtcNow.AddHours(-2);
@@ -110,12 +116,12 @@ public sealed class StorageTests {
 
         // Assert
         var messages = _storage.GetAll();
-        Assert.HasCount(1, messages);
-        Assert.AreEqual("New message", messages[0].Message);
+        Assert.Single(messages);
+        Assert.Equal("New message", messages[0].Message);
     }
 
     /// <summary>Tests that RemoveOlderThan retains messages newer than the cutoff.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_RetainsNewerMessages() {
         // Arrange
         var cutoff = DateTime.UtcNow.AddHours(-1);
@@ -132,11 +138,11 @@ public sealed class StorageTests {
 
         // Assert
         var messages = _storage.GetAll();
-        Assert.HasCount(2, messages);
+        Assert.Equal(2, messages.Count);
     }
 
     /// <summary>Tests that RemoveOlderThan removes all messages when cutoff is in the future.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_WithFutureCutoff_RemovesAllMessages() {
         // Arrange
         var now = DateTime.UtcNow;
@@ -150,11 +156,11 @@ public sealed class StorageTests {
         _storage.RemoveOlderThan(futureCutoff);
 
         // Assert
-        Assert.IsEmpty(_storage.GetAll());
+        Assert.Empty(_storage.GetAll());
     }
 
     /// <summary>Tests that RemoveOlderThan retains all messages when cutoff is in the past.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_WithDistantPastCutoff_RetainsAllMessages() {
         // Arrange
         var now = DateTime.UtcNow;
@@ -168,11 +174,11 @@ public sealed class StorageTests {
 
         // Assert
         var messages = _storage.GetAll();
-        Assert.HasCount(2, messages);
+        Assert.Equal(2, messages.Count);
     }
 
     /// <summary>Tests that RemoveOlderThan handles exact boundary correctly (message at cutoff is retained).</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_MessageAtExactCutoff_IsRetained() {
         // Arrange
         var cutoff = DateTime.UtcNow;
@@ -185,12 +191,12 @@ public sealed class StorageTests {
 
         // Assert - message at exact cutoff time should be retained (not older than cutoff)
         var messages = _storage.GetAll();
-        Assert.HasCount(1, messages);
-        Assert.AreEqual("At cutoff", messages[0].Message);
+        Assert.Single(messages);
+        Assert.Equal("At cutoff", messages[0].Message);
     }
 
     /// <summary>Tests that RemoveOlderThan removes message just before cutoff.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_MessageJustBeforeCutoff_IsRemoved() {
         // Arrange
         var cutoff = DateTime.UtcNow;
@@ -203,21 +209,21 @@ public sealed class StorageTests {
         _storage.RemoveOlderThan(cutoff);
 
         // Assert - message just before cutoff should be removed
-        Assert.IsEmpty(_storage.GetAll());
+        Assert.Empty(_storage.GetAll());
     }
 
     /// <summary>Tests that RemoveOlderThan on empty storage does not throw.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_OnEmptyStorage_DoesNotThrow() {
         // Arrange - storage is already empty
 
         // Act & Assert - should not throw
         _storage.RemoveOlderThan(DateTime.UtcNow);
-        Assert.IsEmpty(_storage.GetAll());
+        Assert.Empty(_storage.GetAll());
     }
 
     /// <summary>Tests that RemoveOlderThan correctly handles mixed old and new messages.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_WithMixedMessages_RemovesOnlyOlderOnes() {
         // Arrange
         var now = DateTime.UtcNow;
@@ -235,14 +241,14 @@ public sealed class StorageTests {
 
         // Assert
         var messages = _storage.GetAll();
-        Assert.HasCount(3, messages);
-        Assert.AreEqual("New 1", messages[0].Message);
-        Assert.AreEqual("New 2", messages[1].Message);
-        Assert.AreEqual("Current", messages[2].Message);
+        Assert.Equal(3, messages.Count);
+        Assert.Equal("New 1", messages[0].Message);
+        Assert.Equal("New 2", messages[1].Message);
+        Assert.Equal("Current", messages[2].Message);
     }
 
     /// <summary>Tests that RemoveOlderThan can be called multiple times with different cutoffs.</summary>
-    [TestMethod]
+    [Fact]
     public void RemoveOlderThan_CalledMultipleTimes_WorksCorrectly() {
         // Arrange
         var now = DateTime.UtcNow;
@@ -256,16 +262,16 @@ public sealed class StorageTests {
         var afterFirstCall = _storage.GetAll();
 
         // Assert after first call
-        Assert.HasCount(3, afterFirstCall);
+        Assert.Equal(3, afterFirstCall.Count);
 
         // Act - second call removes messages older than 1.5 hours ago
         _storage.RemoveOlderThan(now.AddHours(-1.5));
         var afterSecondCall = _storage.GetAll();
 
         // Assert after second call
-        Assert.HasCount(2, afterSecondCall);
-        Assert.AreEqual("Message 3", afterSecondCall[0].Message);
-        Assert.AreEqual("Message 4", afterSecondCall[1].Message);
+        Assert.Equal(2, afterSecondCall.Count);
+        Assert.Equal("Message 3", afterSecondCall[0].Message);
+        Assert.Equal("Message 4", afterSecondCall[1].Message);
     }
 
     #endregion
@@ -273,17 +279,17 @@ public sealed class StorageTests {
     #region GetAll Tests
 
     /// <summary>Tests that GetAll returns empty list for empty storage.</summary>
-    [TestMethod]
+    [Fact]
     public void GetAll_EmptyStorage_ReturnsEmptyList() {
         // Act
         var messages = _storage.GetAll();
 
         // Assert
-        Assert.IsEmpty(messages);
+        Assert.Empty(messages);
     }
 
     /// <summary>Tests that GetAll returns read-only list.</summary>
-    [TestMethod]
+    [Fact]
     public void GetAll_ReturnsReadOnlyList() {
         // Arrange
         _storage.Add(CreateLogMessage("Test"));
@@ -292,7 +298,7 @@ public sealed class StorageTests {
         var messages = _storage.GetAll();
 
         // Assert
-        Assert.IsInstanceOfType<IReadOnlyList<LogMessage>>(messages);
+        Assert.IsAssignableFrom<IReadOnlyList<LogMessage>>(messages);
     }
 
     #endregion
