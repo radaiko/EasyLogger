@@ -5,6 +5,16 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PackageId>EasyLogger</PackageId>
+        <Authors>radaiko</Authors>
+        <Description>A simple, lightweight logging library for .NET applications.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/radaiko/EasyLogger</RepositoryUrl>
+        <PackageTags>logging;logger;dotnet</PackageTags>
+        <PackageVersion>1.0.0</PackageVersion>
+        <PackageProjectUrl>https://github.com/radaiko/EasyLogger</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Copyright>Copyright © radaiko 2025</Copyright>
     </PropertyGroup>
 
     <ItemGroup>
